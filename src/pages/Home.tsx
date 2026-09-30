@@ -131,6 +131,10 @@ export default function Home() {
                 <dd><LocalTime /></dd>
               </div>
               <div>
+                <dt>Building</dt>
+                <dd><a href="#klystr" className="hero__building">Klystr</a></dd>
+              </div>
+              <div>
                 <dt>Studying</dt>
                 <dd>CSE @ IIIT Kota ’27</dd>
               </div>
@@ -162,6 +166,23 @@ export default function Home() {
 
       <Section id="projects" index="03" kicker="Projects" title={<>Side quests <em>that shipped</em></>}>
         <div className="projects">
+          <article id="klystr" className="project project--wip" onMouseMove={spotlight}>
+            <div className="project__head">
+              <span className="project__index">P.00</span>
+              <h3 className="project__name">
+                Klystr
+                <span className="wip">
+                  <span className="wip__dot" />
+                  In progress
+                </span>
+              </h3>
+              <p className="project__kind">A miniature Kubernetes</p>
+            </div>
+            <p className="project__desc">
+              A container orchestrator built from the ground up — Kubernetes, but small enough to
+              fit in your head.
+            </p>
+          </article>
           {projects.map((p, i) => (
             <article key={p.name} className="project" onMouseMove={spotlight}>
               <div className="project__head">
