@@ -2,10 +2,10 @@ import { useEffect, useState, type MouseEvent } from 'react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import EducationGraph from '../components/EducationGraph';
 import Section from '../components/Section';
-
-const EMAIL = 'iujjwalrai2005@gmail.com';
-const GITHUB = 'https://github.com/iujjwalrai';
-const LINKEDIN = 'https://linkedin.com/in/ujjwal-rai-1299b0292';
+import ScrambleText from '../components/ScrambleText';
+import CountUp from '../components/CountUp';
+import KlystrSim from '../components/KlystrSim';
+import { EMAIL, GITHUB, LINKEDIN } from '../data/site';
 
 const projects = [
   {
@@ -89,6 +89,22 @@ const spotlight = (e: MouseEvent<HTMLElement>) => {
   e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`);
 };
 
+// 3D tilt + glare for the photo card, driven by CSS variables.
+const tilt = (e: MouseEvent<HTMLElement>) => {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width - 0.5;
+  const y = (e.clientY - r.top) / r.height - 0.5;
+  el.style.setProperty('--ry', `${x * 14}deg`);
+  el.style.setProperty('--rx', `${-y * 12}deg`);
+  el.style.setProperty('--gx', `${(x + 0.5) * 100}%`);
+  el.style.setProperty('--gy', `${(y + 0.5) * 100}%`);
+};
+
+const untilt = (e: MouseEvent<HTMLElement>) => {
+  for (const prop of ['--rx', '--ry', '--gx', '--gy']) e.currentTarget.style.removeProperty(prop);
+};
+
 export default function Home() {
   const revealRef = useScrollReveal();
 
@@ -98,8 +114,8 @@ export default function Home() {
       <section className="hero">
         <div className="wrap hero__grid">
           <div className="hero__content">
-            <h1 className="hero__name">
-              Ujjwal <em>Rai</em>
+            <h1 className="hero__name" aria-label="Ujjwal Rai">
+              <ScrambleText text="Ujjwal" /> <em aria-hidden="true">Rai</em>
             </h1>
             <p className="hero__lede">
               Software engineer who enjoys the unglamorous parts — queues, databases, and the
@@ -119,7 +135,7 @@ export default function Home() {
             </div>
           </div>
 
-          <figure className="hero__card">
+          <figure className="hero__card" onMouseMove={tilt} onMouseLeave={untilt}>
             <img src="/ujjwal.jpg" alt="Ujjwal Rai" className="hero__photo" />
             <dl className="hero__facts">
               <div>
@@ -182,6 +198,7 @@ export default function Home() {
               A container orchestrator built from the ground up — Kubernetes, but small enough to
               fit in your head.
             </p>
+            <KlystrSim />
           </article>
           {projects.map((p, i) => (
             <article key={p.name} className="project" onMouseMove={spotlight}>
@@ -194,7 +211,7 @@ export default function Home() {
               <dl className="project__stats">
                 {p.stats.map((s) => (
                   <div key={s.label}>
-                    <dt>{s.value}</dt>
+                    <dt><CountUp value={s.value} /></dt>
                     <dd>{s.label}</dd>
                   </div>
                 ))}
@@ -224,7 +241,7 @@ export default function Home() {
         <div className="stats">
           {highlights.map((h) => (
             <div key={h.title} className="stat">
-              <p className="stat__value">{h.value}</p>
+              <p className="stat__value"><CountUp value={h.value} /></p>
               <p className="stat__title">{h.title}</p>
               <p className="stat__note">{h.note}</p>
             </div>
