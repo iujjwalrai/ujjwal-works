@@ -1,10 +1,11 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import EducationGraph from '../components/EducationGraph';
 import Section from '../components/Section';
-import ScrambleText from '../components/ScrambleText';
 import CountUp from '../components/CountUp';
 import KlystrSim from '../components/KlystrSim';
+import TerminalIntro from '../components/TerminalIntro';
+import LiveClock from '../components/LiveClock';
 import { EMAIL, GITHUB, LINKEDIN } from '../data/site';
 
 const projects = [
@@ -51,17 +52,6 @@ const Arrow = () => (
     <path d="M5 11 11 5M6 5h5v5" />
   </svg>
 );
-
-function LocalTime() {
-  const format = () =>
-    new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
-  const [time, setTime] = useState(format);
-  useEffect(() => {
-    const id = setInterval(() => setTime(format()), 15_000);
-    return () => clearInterval(id);
-  }, []);
-  return <>{time} IST</>;
-}
 
 function CopyEmail() {
   const [copied, setCopied] = useState(false);
@@ -114,14 +104,10 @@ export default function Home() {
       <section className="hero">
         <div className="wrap hero__grid">
           <div className="hero__content">
-            <h1 className="hero__name" aria-label="Ujjwal Rai">
-              <ScrambleText text="Ujjwal" /> <em aria-hidden="true">Rai</em>
+            <h1 className="hero__name">
+              Ujjwal <em>Rai</em>
             </h1>
-            <p className="hero__lede">
-              Software engineer who enjoys the unglamorous parts — queues, databases, and the
-              plumbing that keeps production quiet at 2am. Currently building backend features
-              with Django, Python and AWS.
-            </p>
+            <TerminalIntro />
             <div className="hero__actions">
               <a href={`mailto:${EMAIL}`} className="btn btn--solid">
                 Get in touch
@@ -136,15 +122,12 @@ export default function Home() {
           </div>
 
           <figure className="hero__card" onMouseMove={tilt} onMouseLeave={untilt}>
+            <LiveClock />
             <img src="/ujjwal.jpg" alt="Ujjwal Rai" className="hero__photo" />
             <dl className="hero__facts">
               <div>
                 <dt>Based in</dt>
                 <dd>India · remote</dd>
-              </div>
-              <div>
-                <dt>Local time</dt>
-                <dd><LocalTime /></dd>
               </div>
               <div>
                 <dt>Building</dt>

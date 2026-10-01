@@ -20,6 +20,7 @@ export default function Nav({ theme, toggleTheme, onOpenPalette }: NavProps) {
   const links = [
     { to: '/', label: 'Home' },
     { to: '/blog', label: 'Blog' },
+    { to: '/contact', label: 'Contact' },
   ];
 
   const isActive = (path: string) => {

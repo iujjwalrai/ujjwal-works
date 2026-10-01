@@ -8,6 +8,7 @@ import CommandPalette, { type Command } from './components/CommandPalette';
 import Home from './pages/Home';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
+import Contact from './pages/Contact';
 import { getBlogPosts } from './data/blog';
 import { EMAIL, GITHUB, LINKEDIN, SECTIONS, SOURCE } from './data/site';
 
@@ -52,6 +53,7 @@ function Shell() {
     ...SECTIONS.map((s) => ({ id: `go-${s.id}`, group: 'Go to', label: s.label, run: () => goToSection(s.id) })),
     { id: 'go-home', group: 'Go to', label: 'Home', keywords: 'top start', run: () => { navigate('/'); window.scrollTo({ top: 0 }); } },
     { id: 'go-blog', group: 'Go to', label: 'Blog', keywords: 'writing posts', run: () => navigate('/blog') },
+    { id: 'go-contact-page', group: 'Go to', label: 'Send a message', keywords: 'contact form message hire', run: () => navigate('/contact') },
     ...getBlogPosts().map((p) => ({
       id: `post-${p.id}`,
       group: 'Read',
@@ -92,6 +94,7 @@ function Shell() {
           <Route path="/" element={<Home />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<BlogPost />} />
+          <Route path="/contact" element={<Contact />} />
         </Routes>
       </main>
       <Footer />

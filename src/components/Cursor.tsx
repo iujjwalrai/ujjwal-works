@@ -43,6 +43,8 @@ export default function Cursor() {
     const onOver = (e: PointerEvent) => {
       const hovering = e.target instanceof Element && e.target.closest(INTERACTIVE) !== null;
       root.classList.toggle('cursor-hover', hovering);
+      // Over small coloured controls (terminal lights), keep the ring hollow so colours stay true.
+      root.classList.toggle('cursor-quiet', e.target instanceof Element && e.target.closest('.term__lights') !== null);
     };
     const onDown = () => root.classList.add('cursor-down');
     const onUp = () => root.classList.remove('cursor-down');
@@ -61,7 +63,7 @@ export default function Cursor() {
       window.removeEventListener('pointerdown', onDown);
       window.removeEventListener('pointerup', onUp);
       document.removeEventListener('pointerleave', onLeave);
-      root.classList.remove('has-custom-cursor', 'cursor-visible', 'cursor-hover', 'cursor-down');
+      root.classList.remove('has-custom-cursor', 'cursor-visible', 'cursor-hover', 'cursor-quiet', 'cursor-down');
     };
   }, []);
 
