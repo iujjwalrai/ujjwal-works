@@ -469,6 +469,136 @@ a:hover .arrow {
   transition: none !important;
 }
 
+/* ─── Page transition ───
+   Each route fades up out of a soft blur. `backwards` (not `both`) so the transform
+   and filter are gone once it finishes — they'd otherwise break sticky headers. */
+.route-enter {
+  animation: route-enter 0.6s var(--ease) backwards;
+}
+
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-enter { animation: none; }
+}
+
+/* ─── Route curtain ───
+   Bars in the page colour sweep in from the left (staggered), a shell command types out, then the
+   bars leave to the right. Durations come from usePageTransition.ts via --bar-ms / --stagger-ms. */
+.curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  padding: 0 24px;
+}
+
+.curtain__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% / var(--bars) * var(--i));
+  height: calc(100% / var(--bars) + 1px); /* +1px hides hairline seams between bars */
+  background: var(--bg);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: curtain-in calc(var(--bar-ms) * 1ms) cubic-bezier(0.65, 0, 0.35, 1) calc(var(--i) * var(--stagger-ms) * 1ms) forwards;
+}
+
+/* Each bar's leading edge carries a thin accent stripe. */
+.curtain__bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 3px;
+  background: var(--accent);
+}
+
+.curtain--out .curtain__bar {
+  transform: scaleX(1);
+  transform-origin: right;
+  animation: curtain-out calc(var(--bar-ms) * 1ms) cubic-bezier(0.65, 0, 0.35, 1) calc(var(--i) * var(--stagger-ms) * 1ms) forwards;
+}
+
+.curtain--out .curtain__bar::after {
+  left: 0;
+  right: auto;
+}
+
+@keyframes curtain-in {
+  to { transform: scaleX(1); }
+}
+
+@keyframes curtain-out {
+  to { transform: scaleX(0); }
+}
+
+.curtain__cmd {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  max-width: 100%;
+  font-family: var(--font-mono);
+  font-size: clamp(13px, 2.4vw, 20px);
+  color: var(--text);
+  opacity: 0;
+  animation: curtain-text-in calc(var(--bar-ms) * 0.6ms) ease calc(var(--bar-ms) * 0.5ms) forwards;
+}
+
+.curtain--out .curtain__cmd {
+  opacity: 1;
+  animation: curtain-text-out calc(var(--bar-ms) * 0.4ms) ease forwards;
+}
+
+.curtain__prompt {
+  flex: none;
+  color: var(--accent);
+}
+
+/* Typed one character at a time: the width grows in whole `ch` steps. */
+.curtain__typed {
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: curtain-type calc(var(--bar-ms) * 0.95ms) steps(var(--n)) calc(var(--bar-ms) * 0.55ms) forwards;
+}
+
+.curtain--out .curtain__typed {
+  width: calc(var(--n) * 1ch);
+  animation: none;
+}
+
+.curtain__caret {
+  flex: none;
+  width: 0.55em;
+  height: 1.15em;
+  margin-left: -0.45em;
+  background: var(--accent);
+}
+
+@keyframes curtain-type {
+  to { width: calc(var(--n) * 1ch); }
+}
+
+@keyframes curtain-text-in {
+  to { opacity: 1; }
+}
+
+@keyframes curtain-text-out {
+  to { opacity: 0; }
+}
+
 /* ─── Hero ─── */
 .hero {
   position: relative;

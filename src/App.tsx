@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from './hooks/useTheme';
 import Nav from './components/Nav';
 import Footer from './components/Footer';
 import Cursor from './components/Cursor';
 import CommandPalette, { type Command } from './components/CommandPalette';
+import RouteCurtain from './components/RouteCurtain';
+import { usePageTransition } from './hooks/usePageTransition';
 import Home from './pages/Home';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
@@ -16,6 +18,7 @@ function Shell() {
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const { go, phase, command, timing } = usePageTransition();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef(0);
@@ -30,6 +33,17 @@ function Shell() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // New page starts at the top (before paint, so the enter animation isn't mid-scroll).
+  // Skipped on first load so a refresh keeps the browser's restored position.
+  const firstRoute = useRef(true);
+  useLayoutEffect(() => {
+    if (firstRoute.current) {
+      firstRoute.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [location.pathname]);
 
   const notify = (message: string) => {
     setToast(message);
@@ -51,15 +65,15 @@ function Shell() {
 
   const commands: Command[] = [
     ...SECTIONS.map((s) => ({ id: `go-${s.id}`, group: 'Go to', label: s.label, run: () => goToSection(s.id) })),
-    { id: 'go-home', group: 'Go to', label: 'Home', keywords: 'top start', run: () => { navigate('/'); window.scrollTo({ top: 0 }); } },
-    { id: 'go-blog', group: 'Go to', label: 'Blog', keywords: 'writing posts', run: () => navigate('/blog') },
-    { id: 'go-contact-page', group: 'Go to', label: 'Send a message', keywords: 'contact form message hire', run: () => navigate('/contact') },
+    { id: 'go-home', group: 'Go to', label: 'Home', keywords: 'top start', run: () => (location.pathname === '/' ? window.scrollTo({ top: 0, behavior: 'smooth' }) : go('/')) },
+    { id: 'go-blog', group: 'Go to', label: 'Blog', keywords: 'writing posts', run: () => go('/blog') },
+    { id: 'go-contact-page', group: 'Go to', label: 'Send a message', keywords: 'contact form message hire', run: () => go('/contact') },
     ...getBlogPosts().map((p) => ({
       id: `post-${p.id}`,
       group: 'Read',
       label: p.title,
       keywords: p.tags.join(' '),
-      run: () => navigate(`/blog/${p.id}`),
+      run: () => go(`/blog/${p.id}`),
     })),
     {
       id: 'theme',
@@ -90,14 +104,18 @@ function Shell() {
       <Cursor />
       <Nav theme={theme} toggleTheme={toggle} onOpenPalette={() => setPaletteOpen(true)} />
       <main>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:id" element={<BlogPost />} />
-          <Route path="/contact" element={<Contact />} />
-        </Routes>
+        {/* Keyed on the path so every navigation remounts and replays the enter animation. */}
+        <div key={location.pathname} className="route-enter">
+          <Routes location={location}>
+            <Route path="/" element={<Home />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:id" element={<BlogPost />} />
+            <Route path="/contact" element={<Contact />} />
+          </Routes>
+        </div>
       </main>
       <Footer />
+      <RouteCurtain phase={phase} command={command} timing={timing} />
       {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}
       <div className={`toast ${toast ? 'is-visible' : ''}`} role="status">
         {toast}
