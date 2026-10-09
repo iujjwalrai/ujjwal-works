@@ -9,11 +9,18 @@ interface NavProps {
   theme: Theme;
   toggleTheme: (origin?: { x: number; y: number }) => void;
   onOpenPalette: () => void;
+  onOpenTerminal: () => void;
 }
+
+const TerminalIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="m5 7 5 5-5 5M12 18h7" />
+  </svg>
+);
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent);
 
-export default function Nav({ theme, toggleTheme, onOpenPalette }: NavProps) {
+export default function Nav({ theme, toggleTheme, onOpenPalette, onOpenTerminal }: NavProps) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -54,11 +61,20 @@ export default function Nav({ theme, toggleTheme, onOpenPalette }: NavProps) {
               <span>Search</span>
               <kbd>{isMac ? '⌘' : 'Ctrl'} K</kbd>
             </button>
+            <button type="button" className="nav__cmdk nav__term" onClick={onOpenTerminal} title="Open terminal (`)">
+              <TerminalIcon />
+              <span>Terminal</span>
+              <kbd>`</kbd>
+            </button>
             <span className="nav__divider" aria-hidden="true" />
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
           </div>
 
           <div className="nav__mobile-actions">
+            <button type="button" className="nav__cmdk nav__term" onClick={onOpenTerminal}>
+              <TerminalIcon />
+              <span>Terminal</span>
+            </button>
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <button
               className="nav__hamburger"
@@ -111,6 +127,16 @@ export default function Nav({ theme, toggleTheme, onOpenPalette }: NavProps) {
           }}
         >
           Command menu
+        </button>
+        <button
+          type="button"
+          className="nav__mobile-link"
+          onClick={() => {
+            setMobileOpen(false);
+            onOpenTerminal();
+          }}
+        >
+          Terminal
         </button>
       </div>
     </>

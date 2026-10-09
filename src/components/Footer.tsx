@@ -5,7 +5,7 @@ export default function Footer() {
         <p>© {new Date().getFullYear()} Ujjwal Rai</p>
         <p className="footer__note">Compiled with React, caffeine &amp; one too many console.logs.</p>
         <p className="footer__hint">
-          <kbd>⌘K</kbd> commands · <kbd>T</kbd> theme
+          <kbd>⌘K</kbd> commands · <kbd>`</kbd> terminal · <kbd>T</kbd> theme
         </p>
       </div>
     </footer>

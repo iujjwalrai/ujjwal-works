@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
+import { NOW, WHOAMI } from '../data/profile';
 
 type Step = { kind: 'cmd' | 'out'; text: string };
 
 const STEPS: Step[] = [
   { kind: 'cmd', text: 'whoami' },
-  {
-    kind: 'out',
-    text: 'Software engineer who enjoys the unglamorous parts — queues, databases, and the plumbing that keeps production quiet at 2am.',
-  },
+  { kind: 'out', text: WHOAMI },
   { kind: 'cmd', text: 'cat now.txt' },
-  { kind: 'out', text: 'Currently building backend features with Django, Python and AWS.' },
+  { kind: 'out', text: NOW },
 ];
 
 const KEYWORDS = /(queues|databases|2am|Django|Python|AWS)/;

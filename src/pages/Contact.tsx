@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { EMAIL, GITHUB, LINKEDIN } from '../data/site';
+import RequestWaterfall from '../components/RequestWaterfall';
+import { tracedFetch, type RequestTrace } from '../lib/requestTrace';
 
 // Web3Forms access key (public by design). Without it, the form falls back to the visitor's mail app.
 const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_KEY as string | undefined;
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
+
+const ENDPOINT = 'https://api.web3forms.com/submit';
 
 const Arrow = () => (
   <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -16,6 +20,8 @@ export default function Contact() {
   const [status, setStatus] = useState<Status>('idle');
   const [sender, setSender] = useState({ name: '', email: '' });
   const [copied, setCopied] = useState(false);
+  // The latest request, shown as a network waterfall while it runs and after.
+  const [request, setRequest] = useState<{ startedAt: number; trace: RequestTrace | null } | null>(null);
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,25 +36,26 @@ export default function Contact() {
     }
 
     setStatus('sending');
-    try {
-      const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          access_key: ACCESS_KEY,
-          subject: `New message from ${data.name} via ujjwal.works`,
-          from_name: 'Portfolio contact form',
-          name: data.name,
-          email: data.email,
-          message: data.message,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success) throw new Error(json.message);
+    const startedAt = performance.now();
+    setRequest({ startedAt, trace: null });
+    const { data: json, trace } = await tracedFetch<{ success?: boolean }>(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        access_key: ACCESS_KEY,
+        subject: `New message from ${data.name} via ujjwal.works`,
+        from_name: 'Portfolio contact form',
+        name: data.name,
+        email: data.email,
+        message: data.message,
+      }),
+    });
+    setRequest({ startedAt, trace });
+    if (trace.ok && json?.success) {
       setSender({ name: data.name, email: data.email });
       setStatus('sent');
       form.reset();
-    } catch {
+    } else {
       setStatus('error');
     }
   };
@@ -83,6 +90,7 @@ export default function Contact() {
           {status === 'sent' ? (
             <div className="cform cform--done" role="status">
               <p className="cform__code"><span className="cform__ok">200 OK</span> · message delivered</p>
+              {request?.trace && <RequestWaterfall startedAt={request.startedAt} trace={request.trace} />}
               <h2 className="cform__thanks">Thanks, {sender.name.split(' ')[0]}.</h2>
               <p className="cform__note">
                 Your message is in. I'll reply to <strong>{sender.email}</strong> — usually faster than a cold start.
@@ -116,6 +124,10 @@ export default function Contact() {
 
               {/* Honeypot: real people never see or fill this. */}
               <input type="checkbox" name="botcheck" className="sr-only" tabIndex={-1} autoComplete="off" />
+
+              {request && (status === 'sending' || status === 'error') && (
+                <RequestWaterfall startedAt={request.startedAt} trace={request.trace} />
+              )}
 
               <div className="cform__foot">
                 {status === 'error' ? (

@@ -6,7 +6,9 @@ import Footer from './components/Footer';
 import Cursor from './components/Cursor';
 import CommandPalette, { type Command } from './components/CommandPalette';
 import RouteCurtain from './components/RouteCurtain';
+import Console from './components/Console';
 import { usePageTransition } from './hooks/usePageTransition';
+import { cwdFor } from './lib/shell';
 import Home from './pages/Home';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
@@ -20,6 +22,7 @@ function Shell() {
   const location = useLocation();
   const { go, phase, command, timing } = usePageTransition();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [consoleOpen, setConsoleOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef(0);
 
@@ -28,6 +31,14 @@ function Shell() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setPaletteOpen((open) => !open);
+        return;
+      }
+      // Backtick drops the terminal down (the console input handles closing it itself).
+      const target = e.target as HTMLElement;
+      const typing = target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+      if (e.key === '`' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        setConsoleOpen((open) => !open);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -63,6 +74,12 @@ function Shell() {
 
   const open = (url: string) => window.open(url, '_blank', 'noopener,noreferrer');
 
+  const copyEmail = () =>
+    navigator.clipboard.writeText(EMAIL).then(
+      () => notify('Email copied to clipboard'),
+      () => (window.location.href = `mailto:${EMAIL}`),
+    );
+
   const commands: Command[] = [
     ...SECTIONS.map((s) => ({ id: `go-${s.id}`, group: 'Go to', label: s.label, run: () => goToSection(s.id) })),
     { id: 'go-home', group: 'Go to', label: 'Home', keywords: 'top start', run: () => (location.pathname === '/' ? window.scrollTo({ top: 0, behavior: 'smooth' }) : go('/')) },
@@ -88,12 +105,9 @@ function Shell() {
       group: 'Actions',
       label: 'Copy email address',
       keywords: 'contact mail',
-      run: () =>
-        navigator.clipboard.writeText(EMAIL).then(
-          () => notify('Email copied to clipboard'),
-          () => (window.location.href = `mailto:${EMAIL}`),
-        ),
+      run: copyEmail,
     },
+    { id: 'terminal', group: 'Actions', label: 'Open terminal', hint: '`', keywords: 'shell console command line cli', run: () => setConsoleOpen(true) },
     { id: 'github', group: 'Links', label: 'GitHub', hint: '↗', run: () => open(GITHUB) },
     { id: 'linkedin', group: 'Links', label: 'LinkedIn', hint: '↗', run: () => open(LINKEDIN) },
     { id: 'source', group: 'Links', label: 'View this site’s source', hint: '↗', keywords: 'code repo', run: () => open(SOURCE) },
@@ -102,7 +116,7 @@ function Shell() {
   return (
     <>
       <Cursor />
-      <Nav theme={theme} toggleTheme={toggle} onOpenPalette={() => setPaletteOpen(true)} />
+      <Nav theme={theme} toggleTheme={toggle} onOpenPalette={() => setPaletteOpen(true)} onOpenTerminal={() => setConsoleOpen(true)} />
       <main>
         {/* Keyed on the path so every navigation remounts and replays the enter animation. */}
         <div key={location.pathname} className="route-enter">
@@ -116,6 +130,18 @@ function Shell() {
       </main>
       <Footer />
       <RouteCurtain phase={phase} command={command} timing={timing} />
+      <Console
+        open={consoleOpen}
+        cwd={cwdFor(location.pathname)}
+        onClose={() => setConsoleOpen(false)}
+        actions={{
+          go,
+          section: goToSection,
+          theme,
+          toggleTheme: () => toggle({ x: window.innerWidth / 2, y: 0 }),
+          copyEmail: () => void copyEmail(),
+        }}
+      />
       {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}
       <div className={`toast ${toast ? 'is-visible' : ''}`} role="status">
         {toast}
